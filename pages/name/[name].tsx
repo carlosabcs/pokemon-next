@@ -1,16 +1,16 @@
-import { Layout } from '@/components/layouts';
-import { PokemonFull } from '@/interfaces';
-import { getPokemonInfo, localFavorites } from '@/utils';
-import { Button, Card, Container, Grid, Image, Text } from '@nextui-org/react';
-import { GetStaticPaths, GetStaticProps, NextPage } from 'next';
-import { useState } from 'react';
-import confetti from 'canvas-confetti';
+import { Layout } from "@/components/layouts";
+import { PokemonFull, SimplePokemon } from "@/interfaces";
+import { getPokemonInfo, localFavorites } from "@/utils";
+import { Button, Card, Container, Grid, Image, Text } from "@nextui-org/react";
+import confetti from "canvas-confetti";
+import { GetStaticPaths, GetStaticProps, NextPage } from "next";
+import { useState } from "react";
 
 interface Props {
   pokemon: PokemonFull;
 }
 
-const PokemonPage: NextPage<Props> = ({ pokemon }) => {
+const PokemonByName: NextPage<Props> = ({ pokemon }) => {
 
   const [isInFavorites, setIsInFavorites] = useState(
     localFavorites.pokemonExists(pokemon.id)
@@ -92,19 +92,25 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
           </Card>
         </Grid>
       </Grid.Container>
-    </Layout>
-  )
+    </Layout> 
+  );
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const paths = [];
-  for (let i = 1; i <= 151; i++) {
+  const data = await fetch('https://pokeapi.co/api/v2/pokemon?limit=150');
+  const { results }: {
+    results: SimplePokemon[];
+  } = await data.json();
+
+  const paths: { params: { name: string; } }[] = [];
+  results.forEach((pokemon) => {
     paths.push({
       params: {
-        id: `${i}`,
+        name: pokemon.name,
       }
-    })
-  }
+    });
+  });
+
   return {
     paths,
     fallback: false,
@@ -112,12 +118,12 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const getStaticProps: GetStaticProps = async (ctx) => {
-  const { id } = ctx.params as { id: string };
+  const { name } = ctx.params as { name: string };
   return {
     props: {
-      pokemon: await getPokemonInfo(id), 
+      pokemon: await getPokemonInfo(name), 
     },
   };
 };
 
-export default PokemonPage;
+export default PokemonByName;
